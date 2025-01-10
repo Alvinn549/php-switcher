@@ -12,10 +12,10 @@ With this script, you can easily:
 ## Installation
 
    ```bash
-    git clone https://github.com/Alvinn549/bengkel-cat-w.git
+    git clone https://github.com/Alvinn549/php-switcher.git
 
-    cd bengkel-cat-w
+    cd php-switcher
 
-    chmod +x switch_php_version.sh
+    chmod +x php-switcher.sh
 
-    ./switch_php_version.sh
+    ./php-switcher.sh
