@@ -33,11 +33,11 @@ restart_web_server() {
     web_server=$(detect_web_server)
     case "$web_server" in
     nginx)
-        echo -ne "${YELLOW}Restarting Nginx${RESET}"
+        echo -ne "${YELLOW}Restarting Nginx${RESET}..."
         sudo systemctl restart nginx &
         ;;
     apache2)
-        echo -ne "${YELLOW}Restarting Apache2${RESET}"
+        echo -ne "${YELLOW}Restarting Apache2${RESET}..."
         sudo systemctl restart apache2 &
         ;;
     *)
