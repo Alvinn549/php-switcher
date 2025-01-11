@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Ensure the script is run as sudo
+if [ "$EUID" -ne 0 ]; then
+    echo "This script must be run as sudo. Please rerun the script using 'sudo ./setup.sh'"
+    exit 1
+fi
+
 # Colors for better output
 GREEN="\e[32m"
 RED="\e[31m"
@@ -231,4 +237,4 @@ else
 fi
 
 echo -ne "\n"
-echo -e "${YELLOW}To switch between installed PHP versions, run:${RESET} ${CYAN}./php-switcher${RESET}\n"
+echo -e "${YELLOW}To switch between installed PHP versions, run:${RESET} ${CYAN}sudo ./php-switcher.sh${RESET}\n"
