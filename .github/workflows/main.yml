@@ -1,0 +1,45 @@
+name: Test Setup Script
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lsb-release apt-transport-https ca-certificates wget gnupg software-properties-common
+
+      - name: Run the setup script with simulated input (Apache + All PHP versions)
+        run: |
+          chmod +x setup.sh
+
+          # Simulate choosing Apache (1) and All PHP Versions (12)
+          echo -e "1\n12" | sudo ./setup.sh
+
+      - name: Verify PHP installation
+        run: |
+          php -v
+          ls /usr/bin/php* | grep php
+
+      - name: Verify Apache/Nginx installation
+        run: |
+          if command -v apache2 >/dev/null 2>&1; then
+            echo "✅ Apache is installed"
+          elif command -v nginx >/dev/null 2>&1; then
+            echo "✅ Nginx is installed"
+          else
+            echo "❌ Web server installation failed"
+            exit 1
+          fi
