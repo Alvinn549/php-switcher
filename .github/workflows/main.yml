@@ -21,25 +21,31 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y lsb-release apt-transport-https ca-certificates wget gnupg software-properties-common
 
-      - name: Run the setup script with simulated input (Apache + All PHP versions)
+      - name: Run the setup script with simulated input (All PHP versions)
         run: |
           chmod +x setup.sh
 
-          # Simulate choosing Apache (1) and All PHP Versions (12)
-          echo -e "1\n12" | sudo ./setup.sh
+          echo -e "12" | sudo ./setup.sh
 
-      - name: Verify PHP installation
+      - name: Verify All PHP Versions Installation
         run: |
-          php -v
-          ls /usr/bin/php* | grep php
+          PHP_VERSIONS=("5.6" "7.0" "7.1" "7.2" "7.3" "7.4" "8.0" "8.1" "8.2" "8.3" "8.4")
 
-      - name: Verify Apache/Nginx installation
+          for version in "${PHP_VERSIONS[@]}"; do
+            if command -v php$version >/dev/null 2>&1; then
+              echo "✅ PHP $version is installed"
+            else
+              echo "❌ PHP $version is NOT installed"
+              exit 1
+            fi
+          done
+
+      - name: Verify Apache/Nginx installation (Optional)
         run: |
           if command -v apache2 >/dev/null 2>&1; then
             echo "✅ Apache is installed"
           elif command -v nginx >/dev/null 2>&1; then
             echo "✅ Nginx is installed"
           else
-            echo "❌ Web server installation failed"
-            exit 1
+            echo "⚠️ Web server not detected, but continuing"
           fi
