@@ -26,13 +26,12 @@ print_section() {
 
 # Spinner function for loading effect
 spinner() {
-    local pid=$!
+    local pid=$1
     local delay=0.1
     local spinstr='|/-\\'
-    while ps -p $pid >/dev/null; do
-        local temp=${spinstr#?}
+    while ps -p $pid >/dev/null 2>&1; do
         printf " [%c]  " "$spinstr"
-        local spinstr=$temp${spinstr%"$temp"}
+        spinstr=${spinstr#?}${spinstr%"$spinstr"}
         sleep $delay
         printf "\b\b\b\b\b\b"
     done
@@ -89,13 +88,13 @@ check_web_server() {
         case "$web_choice" in
         1)
             echo -e "${GREEN}Installing Apache...${RESET}"
-            sudo apt install -y apache2 >/dev/null 2>&1 &
+            sudo apt install -y apache2 >/dev/null 2>&1
             show_spinner $!
             echo -e "${GREEN}Apache installation completed.${RESET}"
             ;;
         2)
             echo -e "${GREEN}Installing Nginx...${RESET}"
-            sudo apt install -y nginx >/dev/null 2>&1 &
+            sudo apt install -y nginx >/dev/null 2>&1
             show_spinner $!
             echo -e "${GREEN}Nginx installation completed.${RESET}"
             ;;
