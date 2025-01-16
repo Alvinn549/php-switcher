@@ -47,7 +47,7 @@ get_installed_php_version() {
 get_distro_name() {
     if [ -f /etc/os-release ]; then
         . /etc/os-release
-        echo $ID
+        echo "${ID} ${ID_LIKE}"
     else
         echo "unknown"
     fi
@@ -55,11 +55,10 @@ get_distro_name() {
 
 # Restrict script to Debian, Ubuntu, and Ubuntu-based distributions
 check_supported_distro() {
-    distro=$(get_distro_name)
-    if [[ "$distro" == "debian" || "$distro" == "ubuntu" ]]; then
-        echo -e "${GREEN}Detected supported OS: $distro${RESET}"
-    elif grep -qi 'ubuntu' /etc/os-release; then
-        echo -e "${GREEN}Detected supported Ubuntu-based OS: $distro${RESET}"
+    distro_info=$(get_distro_name)
+
+    if [[ "$distro_info" == *"debian"* || "$distro_info" == *"ubuntu"* ]]; then
+        echo -e "${GREEN}Detected supported OS: $distro_info${RESET}"
     else
         echo -e "${RED}This script only supports Debian, Ubuntu, and Ubuntu-based distributions.${RESET}"
         exit 1
@@ -107,28 +106,38 @@ check_web_server() {
 
 # Set up PHP repository based on distro
 setup_php_repo() {
-    distro=$(get_distro_name)
-    print_section "Checking PHP Repository for $distro"
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        distro_info="$ID $ID_LIKE"
+    else
+        distro_info="unknown"
+    fi
 
-    if [[ "$distro" == "debian" ]]; then
+    print_section "Checking PHP Repository for $distro_info"
+
+    if [[ "$distro_info" == *"debian"* ]]; then
         if is_repo_installed "packages.sury.org/php"; then
             echo -e "${YELLOW}PHP repository for Debian is already installed.${RESET}"
         else
             echo -e "${GREEN}Installing PHP repository for Debian...${RESET}"
-            (sudo apt-get update -y >/dev/null && sudo apt install lsb-release apt-transport-https ca-certificates wget gnupg -y >/dev/null && wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg >/dev/null && echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list >/dev/null && sudo apt-get update -y >/dev/null) &
-            spinner
+            (sudo apt-get update -y >/dev/null && sudo apt install -y lsb-release apt-transport-https ca-certificates wget gnupg >/dev/null && wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg >/dev/null && echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list >/dev/null && sudo apt-get update -y >/dev/null) &
+            spinner $!
             echo -e "${GREEN}PHP repository for Debian has been set up successfully.${RESET}"
         fi
 
-    elif [[ "$distro" == "ubuntu" ]]; then
+    elif [[ "$distro_info" == *"ubuntu"* ]]; then
         if is_repo_installed "ppa.launchpad.net/ondrej/php"; then
             echo -e "${YELLOW}PHP repository for Ubuntu is already installed.${RESET}"
         else
             echo -e "${GREEN}Installing PHP repository for Ubuntu...${RESET}"
-            (sudo apt-get update -y >/dev/null && sudo apt install software-properties-common gnupg2 -y >/dev/null && sudo add-apt-repository -y ppa:ondrej/php >/dev/null && sudo apt-get update -y >/dev/null) &
-            spinner
+            (sudo apt-get update -y >/dev/null && sudo apt install -y software-properties-common gnupg2 >/dev/null && sudo add-apt-repository -y ppa:ondrej/php >/dev/null && sudo apt-get update -y >/dev/null) &
+            spinner $!
             echo -e "${GREEN}PHP repository for Ubuntu has been set up successfully.${RESET}"
         fi
+
+    else
+        echo -e "${RED}Unsupported Linux distribution for PHP repository setup.${RESET}"
+        exit 1
     fi
 }
 
