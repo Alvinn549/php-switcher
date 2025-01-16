@@ -19,7 +19,6 @@ This repository provides a set of scripts designed to:
 
 - Debian
 - Ubuntu
-- Ubuntu-based distributions
 
 ## Installation
 

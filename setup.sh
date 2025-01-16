@@ -54,15 +54,13 @@ get_distro_name() {
     fi
 }
 
-# Restrict script to Debian, Ubuntu, and Ubuntu-based distributions
+# Restrict script to Debian and Ubuntu
 check_supported_distro() {
     distro=$(get_distro_name)
     if [[ "$distro" == "debian" || "$distro" == "ubuntu" ]]; then
         echo -e "${GREEN}Detected supported OS: $distro${RESET}"
-    elif grep -qi 'ubuntu' /etc/os-release; then
-        echo -e "${GREEN}Detected supported Ubuntu-based OS: $distro${RESET}"
     else
-        echo -e "${RED}This script only supports Debian, Ubuntu, and Ubuntu-based distributions.${RESET}"
+        echo -e "${RED}This script only supports Debian and Ubuntu.${RESET}"
         exit 1
     fi
 }
