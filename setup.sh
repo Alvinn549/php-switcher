@@ -28,7 +28,7 @@ print_section() {
 spinner() {
     local pid=$1
     local delay=0.1
-    local spinstr='|/-\\'
+    local spinstr='|/-\'
     while ps -p $pid >/dev/null 2>&1; do
         printf " [%c]  " "$spinstr"
         spinstr=${spinstr#?}${spinstr%"$spinstr"}
@@ -47,20 +47,20 @@ get_installed_php_version() {
 get_distro_name() {
     if [ -f /etc/os-release ]; then
         . /etc/os-release
-        echo "${ID} ${ID_LIKE}"
+        echo "$ID"
     else
         echo "unknown"
     fi
 }
 
-# Restrict script to Debian, Ubuntu, and Ubuntu-based distributions
+# Restrict script to Debian and Ubuntu distributions
 check_supported_distro() {
     distro_info=$(get_distro_name)
 
-    if [[ "$distro_info" == *"debian"* || "$distro_info" == *"ubuntu"* ]]; then
+    if [[ "$distro_info" == "debian" || "$distro_info" == "ubuntu" ]]; then
         echo -e "${GREEN}Detected supported OS: $distro_info${RESET}"
     else
-        echo -e "${RED}This script only supports Debian, Ubuntu, and Ubuntu-based distributions.${RESET}"
+        echo -e "${RED}This script only supports Debian and Ubuntu distributions.${RESET}"
         exit 1
     fi
 }
@@ -88,13 +88,13 @@ check_web_server() {
         1)
             echo -e "${GREEN}Installing Apache...${RESET}"
             sudo apt install -y apache2 >/dev/null 2>&1
-            show_spinner $!
+            spinner $!
             echo -e "${GREEN}Apache installation completed.${RESET}"
             ;;
         2)
             echo -e "${GREEN}Installing Nginx...${RESET}"
             sudo apt install -y nginx >/dev/null 2>&1
-            show_spinner $!
+            spinner $!
             echo -e "${GREEN}Nginx installation completed.${RESET}"
             ;;
         *)
@@ -106,27 +106,20 @@ check_web_server() {
 
 # Set up PHP repository based on distro
 setup_php_repo() {
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-    else
-        echo -e "${RED}/etc/os-release not found. Cannot detect OS.${RESET}"
-        exit 1
-    fi
+    distro_info=$(get_distro_name)
 
-    print_section "Checking PHP Repository for $ID"
+    print_section "Checking PHP Repository for $distro_info"
 
-    if [[ -n "$UBUNTU_CODENAME" ]]; then
-        # Ubuntu-based distributions (including Pop!_OS)
+    if [[ "$distro_info" == "ubuntu" ]]; then
         if is_repo_installed "ppa.launchpad.net/ondrej/php"; then
             echo -e "${YELLOW}PHP repository for Ubuntu is already installed.${RESET}"
         else
-            echo -e "${GREEN}Installing PHP repository for Ubuntu-based system...${RESET}"
+            echo -e "${GREEN}Installing PHP repository for Ubuntu...${RESET}"
             (sudo apt-get update -y >/dev/null && sudo apt install -y software-properties-common gnupg2 >/dev/null && sudo add-apt-repository -y ppa:ondrej/php >/dev/null && sudo apt-get update -y >/dev/null) &
             spinner $!
-            echo -e "${GREEN}PHP repository for Ubuntu-based system has been set up successfully.${RESET}"
+            echo -e "${GREEN}PHP repository for Ubuntu has been set up successfully.${RESET}"
         fi
-    elif [[ "$ID" == "debian" || "$ID_LIKE" == *"debian"* ]]; then
-        # Debian or Debian-like distributions
+    elif [[ "$distro_info" == "debian" ]]; then
         if is_repo_installed "packages.sury.org/php"; then
             echo -e "${YELLOW}PHP repository for Debian is already installed.${RESET}"
         else
