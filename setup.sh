@@ -26,12 +26,13 @@ print_section() {
 
 # Spinner function for loading effect
 spinner() {
-    local pid=$1
+    local pid=$!
     local delay=0.1
-    local spinstr='|/-\'
-    while ps -p $pid >/dev/null 2>&1; do
+    local spinstr='|/-\\'
+    while ps -p $pid >/dev/null; do
+        local temp=${spinstr#?}
         printf " [%c]  " "$spinstr"
-        spinstr=${spinstr#?}${spinstr%"$spinstr"}
+        local spinstr=$temp${spinstr%"$temp"}
         sleep $delay
         printf "\b\b\b\b\b\b"
     done
@@ -47,20 +48,21 @@ get_installed_php_version() {
 get_distro_name() {
     if [ -f /etc/os-release ]; then
         . /etc/os-release
-        echo "$ID"
+        echo $ID
     else
         echo "unknown"
     fi
 }
 
-# Restrict script to Debian and Ubuntu distributions
+# Restrict script to Debian, Ubuntu, and Ubuntu-based distributions
 check_supported_distro() {
-    distro_info=$(get_distro_name)
-
-    if [[ "$distro_info" == "debian" || "$distro_info" == "ubuntu" ]]; then
-        echo -e "${GREEN}Detected supported OS: $distro_info${RESET}"
+    distro=$(get_distro_name)
+    if [[ "$distro" == "debian" || "$distro" == "ubuntu" ]]; then
+        echo -e "${GREEN}Detected supported OS: $distro${RESET}"
+    elif grep -qi 'ubuntu' /etc/os-release; then
+        echo -e "${GREEN}Detected supported Ubuntu-based OS: $distro${RESET}"
     else
-        echo -e "${RED}This script only supports Debian and Ubuntu distributions.${RESET}"
+        echo -e "${RED}This script only supports Debian, Ubuntu, and Ubuntu-based distributions.${RESET}"
         exit 1
     fi
 }
@@ -87,14 +89,14 @@ check_web_server() {
         case "$web_choice" in
         1)
             echo -e "${GREEN}Installing Apache...${RESET}"
-            sudo apt install -y apache2 >/dev/null 2>&1
-            spinner $!
+            sudo apt install -y apache2 >/dev/null 2>&1 &
+            show_spinner $!
             echo -e "${GREEN}Apache installation completed.${RESET}"
             ;;
         2)
             echo -e "${GREEN}Installing Nginx...${RESET}"
-            sudo apt install -y nginx >/dev/null 2>&1
-            spinner $!
+            sudo apt install -y nginx >/dev/null 2>&1 &
+            show_spinner $!
             echo -e "${GREEN}Nginx installation completed.${RESET}"
             ;;
         *)
