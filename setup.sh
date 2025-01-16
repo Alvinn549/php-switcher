@@ -108,14 +108,25 @@ check_web_server() {
 setup_php_repo() {
     if [ -f /etc/os-release ]; then
         . /etc/os-release
-        distro_info="$ID $ID_LIKE"
     else
-        distro_info="unknown"
+        echo -e "${RED}/etc/os-release not found. Cannot detect OS.${RESET}"
+        exit 1
     fi
 
-    print_section "Checking PHP Repository for $distro_info"
+    print_section "Checking PHP Repository for $ID"
 
-    if [[ "$distro_info" == *"debian"* ]]; then
+    if [[ -n "$UBUNTU_CODENAME" ]]; then
+        # Ubuntu-based distributions (including Pop!_OS)
+        if is_repo_installed "ppa.launchpad.net/ondrej/php"; then
+            echo -e "${YELLOW}PHP repository for Ubuntu is already installed.${RESET}"
+        else
+            echo -e "${GREEN}Installing PHP repository for Ubuntu-based system...${RESET}"
+            (sudo apt-get update -y >/dev/null && sudo apt install -y software-properties-common gnupg2 >/dev/null && sudo add-apt-repository -y ppa:ondrej/php >/dev/null && sudo apt-get update -y >/dev/null) &
+            spinner $!
+            echo -e "${GREEN}PHP repository for Ubuntu-based system has been set up successfully.${RESET}"
+        fi
+    elif [[ "$ID" == "debian" || "$ID_LIKE" == *"debian"* ]]; then
+        # Debian or Debian-like distributions
         if is_repo_installed "packages.sury.org/php"; then
             echo -e "${YELLOW}PHP repository for Debian is already installed.${RESET}"
         else
@@ -124,17 +135,6 @@ setup_php_repo() {
             spinner $!
             echo -e "${GREEN}PHP repository for Debian has been set up successfully.${RESET}"
         fi
-
-    elif [[ "$distro_info" == *"ubuntu"* ]]; then
-        if is_repo_installed "ppa.launchpad.net/ondrej/php"; then
-            echo -e "${YELLOW}PHP repository for Ubuntu is already installed.${RESET}"
-        else
-            echo -e "${GREEN}Installing PHP repository for Ubuntu...${RESET}"
-            (sudo apt-get update -y >/dev/null && sudo apt install -y software-properties-common gnupg2 >/dev/null && sudo add-apt-repository -y ppa:ondrej/php >/dev/null && sudo apt-get update -y >/dev/null) &
-            spinner $!
-            echo -e "${GREEN}PHP repository for Ubuntu has been set up successfully.${RESET}"
-        fi
-
     else
         echo -e "${RED}Unsupported Linux distribution for PHP repository setup.${RESET}"
         exit 1
