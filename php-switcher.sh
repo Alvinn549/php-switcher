@@ -2,7 +2,7 @@
 
 # Ensure the script is run as sudo
 if [ "$EUID" -ne 0 ]; then
-    echo "This script must be run as sudo. Please rerun the script using 'sudo ./setup.sh'"
+    echo "This script must be run as sudo. Please rerun the script using 'sudo ./php-switcher.sh'"
     exit 1
 fi
 
