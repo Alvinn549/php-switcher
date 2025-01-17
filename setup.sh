@@ -89,14 +89,14 @@ check_web_server() {
         1)
             echo -e "${GREEN}Installing Apache...${RESET}"
             sudo apt install -y apache2 >/dev/null 2>&1 &
-            spinner $!
-            echo -e "${GREEN}Apache installation completed.${RESET}"
+            spinner
+            echo -e "${GREEN}[OK]${RESET}"
             ;;
         2)
             echo -e "${GREEN}Installing Nginx...${RESET}"
             sudo apt install -y nginx >/dev/null 2>&1 &
-            spinner $!
-            echo -e "${GREEN}Nginx installation completed.${RESET}"
+            spinner
+            echo -e "${GREEN}[OK]${RESET}"
             ;;
         *)
             echo -e "${RED}Invalid choice. Skipping web server installation.${RESET}"
@@ -172,7 +172,7 @@ process_php_selection() {
     fi
 }
 
-# Install selected PHP versions and extensions with spinner
+# Install selected PHP versions and extensions
 install_php_versions() {
     print_section "Installing Selected PHP Versions"
 
