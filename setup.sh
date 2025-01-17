@@ -89,13 +89,13 @@ check_web_server() {
         1)
             echo -e "${GREEN}Installing Apache...${RESET}"
             sudo apt install -y apache2 >/dev/null 2>&1 &
-            show_spinner $!
+            spinner $!
             echo -e "${GREEN}Apache installation completed.${RESET}"
             ;;
         2)
             echo -e "${GREEN}Installing Nginx...${RESET}"
             sudo apt install -y nginx >/dev/null 2>&1 &
-            show_spinner $!
+            spinner $!
             echo -e "${GREEN}Nginx installation completed.${RESET}"
             ;;
         *)
