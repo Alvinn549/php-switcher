@@ -120,7 +120,7 @@ setup_php_repo() {
         fi
 
     elif [[ "$distro" == "ubuntu" ]]; then
-        if is_repo_installed "ppa.launchpad.net/ondrej/php"; then
+        if is_repo_installed "ppa.launchpadcontent.net/ondrej/php"; then
             echo -e "${YELLOW}PHP repository for Ubuntu is already installed.${RESET}"
         else
             echo -e "${GREEN}Installing PHP repository for Ubuntu...${RESET}"
