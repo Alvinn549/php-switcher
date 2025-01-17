@@ -68,7 +68,7 @@ check_supported_distro() {
 # Check if repository is already added
 is_repo_installed() {
     local repo=$1
-    grep -h "^deb .*$repo" /etc/apt/sources.list /etc/apt/sources.list.d/* >/dev/null
+    grep -i "$repo" /etc/apt/sources.list /etc/apt/sources.list.d/* >/dev/null
 }
 
 # Function to check if a web server is installed
