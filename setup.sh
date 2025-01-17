@@ -87,13 +87,13 @@ check_web_server() {
 
         case "$web_choice" in
         1)
-            echo -e "${GREEN}Installing Apache...${RESET}"
+            echo -ne "${YELLOW}Installing Apache...${RESET}"
             sudo apt install -y apache2 >/dev/null 2>&1 &
             spinner
             echo -e "${GREEN}[OK]${RESET}"
             ;;
         2)
-            echo -e "${GREEN}Installing Nginx...${RESET}"
+            echo -ne "${YELLOW}Installing Nginx...${RESET}"
             sudo apt install -y nginx >/dev/null 2>&1 &
             spinner
             echo -e "${GREEN}[OK]${RESET}"
@@ -114,7 +114,7 @@ setup_php_repo() {
         if is_repo_installed "packages.sury.org/php"; then
             echo -e "${YELLOW}PHP repository for Debian is already installed.${RESET}"
         else
-            echo -e "${GREEN}Installing PHP repository for Debian...${RESET}"
+            echo -e "${YELLOW}Installing PHP repository for Debian...${RESET}"
             (sudo apt-get update -y >/dev/null && sudo apt install lsb-release apt-transport-https ca-certificates wget gnupg -y >/dev/null && wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg >/dev/null && echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list >/dev/null && sudo apt-get update -y >/dev/null) &
             spinner
             echo -e "${GREEN}PHP repository for Debian has been set up successfully.${RESET}"
@@ -124,7 +124,7 @@ setup_php_repo() {
         if is_repo_installed "ppa.launchpadcontent.net/ondrej/php"; then
             echo -e "${YELLOW}PHP repository for Ubuntu is already installed.${RESET}"
         else
-            echo -e "${GREEN}Installing PHP repository for Ubuntu...${RESET}"
+            echo -e "${YELLOW}Installing PHP repository for Ubuntu...${RESET}"
             (sudo apt-get update -y >/dev/null && sudo apt install software-properties-common gnupg2 -y >/dev/null && sudo add-apt-repository -y ppa:ondrej/php >/dev/null && sudo apt-get update -y >/dev/null) &
             spinner
             echo -e "${GREEN}PHP repository for Ubuntu has been set up successfully.${RESET}"
