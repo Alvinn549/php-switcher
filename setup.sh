@@ -82,6 +82,7 @@ check_web_server() {
         echo -e "${CYAN}Select a web server to install:${RESET}"
         echo "1) Apache"
         echo "2) Nginx"
+        echo "Press any other key to skip web server installation."
         read -p "Enter your choice [1/2]: " web_choice
 
         case "$web_choice" in
