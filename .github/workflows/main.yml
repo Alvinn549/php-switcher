@@ -1,4 +1,4 @@
-name: Test Setup Script
+name: Test PHP Switcher and Setup
 
 on:
   push:
@@ -9,9 +9,8 @@ on:
       - main
 
 jobs:
-  test-script:
+  test-setup-and-switcher:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -24,13 +23,11 @@ jobs:
       - name: Run the setup script with simulated input (All PHP versions)
         run: |
           chmod +x setup.sh
-
           echo -e "12" | sudo ./setup.sh
 
       - name: Verify All PHP Versions Installation
         run: |
           PHP_VERSIONS=("5.6" "7.0" "7.1" "7.2" "7.3" "7.4" "8.0" "8.1" "8.2" "8.3" "8.4")
-
           for version in "${PHP_VERSIONS[@]}"; do
             if command -v php$version >/dev/null 2>&1; then
               echo "✅ PHP $version is installed"
@@ -48,4 +45,31 @@ jobs:
             echo "✅ Nginx is installed"
           else
             echo "⚠️ Web server not detected, but continuing"
+          fi
+
+      - name: Test PHP Switcher (Switch to PHP 8.1)
+        run: |
+          chmod +x php-switcher.sh
+          echo -e "8" | sudo ./php-switcher.sh
+          php -v | grep "8.1" || (echo "❌ PHP was not switched to 8.1" && exit 1)
+
+      - name: Test PHP Switcher (Switch to PHP 7.4)
+        run: |
+          echo -e "6" | sudo ./php-switcher.sh
+          php -v | grep "7.4" || (echo "❌ PHP was not switched to 7.4" && exit 1)
+
+      - name: Show error logs if present
+        if: always()
+        run: |
+          if [ -f php_install_errors.log ]; then
+            echo "--- php_install_errors.log ---"
+            cat php_install_errors.log
+          fi
+          if [ -f setup_errors.log ]; then
+            echo "--- setup_errors.log ---"
+            cat setup_errors.log
+          fi
+          if [ -f php_switcher_errors.log ]; then
+            echo "--- php_switcher_errors.log ---"
+            cat php_switcher_errors.log
           fi
