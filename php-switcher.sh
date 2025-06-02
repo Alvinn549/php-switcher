@@ -6,6 +6,11 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+ERROR_LOG="php_switcher_errors.log"
+
+# Clear previous log if exists
+> "$ERROR_LOG"
+
 # Colors for better output
 GREEN="\e[32m"
 RED="\e[31m"
