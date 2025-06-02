@@ -40,14 +40,27 @@ restart_web_server() {
     case "$web_server" in
     nginx)
         echo -ne "${YELLOW}Restarting Nginx${RESET}..."
-        sudo systemctl restart nginx &
+        sudo systemctl restart nginx 2>>$ERROR_LOG
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}[OK]${RESET}"
+        else
+            echo -e "${RED}[FAILED]${RESET}"
+            echo "[$(date)] Failed to restart Nginx." >>$ERROR_LOG
+        fi
         ;;
     apache2)
         echo -ne "${YELLOW}Restarting Apache2${RESET}..."
-        sudo systemctl restart apache2 &
+        sudo systemctl restart apache2 2>>$ERROR_LOG
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}[OK]${RESET}"
+        else
+            echo -e "${RED}[FAILED]${RESET}"
+            echo "[$(date)] Failed to restart Apache2." >>$ERROR_LOG
+        fi
         ;;
     *)
         echo -e "${RED}No web server detected to restart.${RESET}"
+        echo "[$(date)] No web server detected to restart." >>$ERROR_LOG
         ;;
     esac
 }
@@ -87,6 +100,7 @@ read choice
 # Validate input
 if [[ ! "$choice" =~ ^[0-9]+$ ]] || [[ -z "${php_map[$choice]}" ]]; then
     echo -e "${RED}Invalid selection.${RESET}"
+    echo "[$(date)] Invalid PHP version selection: $choice" >>$ERROR_LOG
     exit 1
 fi
 
@@ -103,19 +117,27 @@ print_section "Switching PHP CLI"
 if [ -f "$php_cli_path" ]; then
     if sudo update-alternatives --list php >/dev/null 2>&1; then
         echo -ne "${YELLOW}Switching PHP CLI to $selected_version...${RESET}"
-        sudo update-alternatives --set php "$php_cli_path" >/dev/null &
-        wait $!
-        echo -e "${GREEN}[OK]${RESET}"
+        sudo update-alternatives --set php "$php_cli_path" >/dev/null 2>>$ERROR_LOG
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}[OK]${RESET}"
+        else
+            echo -e "${RED}[FAILED]${RESET}"
+            echo "[$(date)] Failed to switch PHP CLI to $selected_version." >>$ERROR_LOG
+        fi
     else
         echo -ne "${YELLOW}Configuring PHP CLI for $selected_version...${RESET}"
-        sudo update-alternatives --install /usr/bin/php php "$php_cli_path" $((selected_version * 10)) >/dev/null &
-        wait $!
-        sudo update-alternatives --set php "$php_cli_path" >/dev/null &
-        wait $!
-        echo -e "${GREEN}[OK]${RESET}"
+        sudo update-alternatives --install /usr/bin/php php "$php_cli_path" $((selected_version * 10)) >/dev/null 2>>$ERROR_LOG
+        sudo update-alternatives --set php "$php_cli_path" >/dev/null 2>>$ERROR_LOG
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}[OK]${RESET}"
+        else
+            echo -e "${RED}[FAILED]${RESET}"
+            echo "[$(date)] Failed to configure PHP CLI for $selected_version." >>$ERROR_LOG
+        fi
     fi
 else
     echo -e "${RED}PHP CLI $selected_version is not installed at $php_cli_path.${RESET}"
+    echo "[$(date)] PHP CLI $selected_version not found at $php_cli_path." >>$ERROR_LOG
 fi
 
 # Switch PHP-FPM
@@ -123,19 +145,27 @@ print_section "Switching PHP-FPM"
 if [ -S "$php_fpm_sock_path" ]; then
     if sudo update-alternatives --list php-fpm.sock >/dev/null 2>&1; then
         echo -ne "${YELLOW}Switching PHP-FPM to $selected_version...${RESET}"
-        sudo update-alternatives --set php-fpm.sock "$php_fpm_sock_path" >/dev/null &
-        wait $!
-        echo -e "${GREEN}[OK]${RESET}"
+        sudo update-alternatives --set php-fpm.sock "$php_fpm_sock_path" >/dev/null 2>>$ERROR_LOG
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}[OK]${RESET}"
+        else
+            echo -e "${RED}[FAILED]${RESET}"
+            echo "[$(date)] Failed to switch PHP-FPM to $selected_version." >>$ERROR_LOG
+        fi
     else
         echo -ne "${YELLOW}Configuring PHP-FPM socket for $selected_version...${RESET}"
-        sudo update-alternatives --install /run/php/php-fpm.sock php-fpm.sock "$php_fpm_sock_path" $((selected_version * 10)) >/dev/null &
-        wait $!
-        sudo update-alternatives --set php-fpm.sock "$php_fpm_sock_path" >/dev/null &
-        wait $!
-        echo -e "${GREEN}[OK]${RESET}"
+        sudo update-alternatives --install /run/php/php-fpm.sock php-fpm.sock "$php_fpm_sock_path" $((selected_version * 10)) >/dev/null 2>>$ERROR_LOG
+        sudo update-alternatives --set php-fpm.sock "$php_fpm_sock_path" >/dev/null 2>>$ERROR_LOG
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}[OK]${RESET}"
+        else
+            echo -e "${RED}[FAILED]${RESET}"
+            echo "[$(date)] Failed to configure PHP-FPM socket for $selected_version." >>$ERROR_LOG
+        fi
     fi
 else
     echo -e "${RED}PHP-FPM socket for version $selected_version is not installed at $php_fpm_sock_path.${RESET}"
+    echo "[$(date)] PHP-FPM socket for $selected_version not found at $php_fpm_sock_path." >>$ERROR_LOG
 fi
 
 # Switch PHP-CGI
@@ -143,19 +173,27 @@ print_section "Switching PHP-CGI"
 if [ -f "$php_cgi_path" ]; then
     if sudo update-alternatives --list php-cgi >/dev/null 2>&1; then
         echo -ne "${YELLOW}Switching PHP-CGI to $selected_version...${RESET}"
-        sudo update-alternatives --set php-cgi "$php_cgi_path" >/dev/null &
-        wait $!
-        echo -e "${GREEN}[OK]${RESET}"
+        sudo update-alternatives --set php-cgi "$php_cgi_path" >/dev/null 2>>$ERROR_LOG
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}[OK]${RESET}"
+        else
+            echo -e "${RED}[FAILED]${RESET}"
+            echo "[$(date)] Failed to switch PHP-CGI to $selected_version." >>$ERROR_LOG
+        fi
     else
         echo -ne "${YELLOW}Configuring PHP-CGI for $selected_version...${RESET}"
-        sudo update-alternatives --install /usr/bin/php-cgi php-cgi "$php_cgi_path" $((selected_version * 10)) >/dev/null &
-        wait $!
-        sudo update-alternatives --set php-cgi "$php_cgi_path" >/dev/null &
-        wait $!
-        echo -e "${GREEN}[OK]${RESET}"
+        sudo update-alternatives --install /usr/bin/php-cgi php-cgi "$php_cgi_path" $((selected_version * 10)) >/dev/null 2>>$ERROR_LOG
+        sudo update-alternatives --set php-cgi "$php_cgi_path" >/dev/null 2>>$ERROR_LOG
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}[OK]${RESET}"
+        else
+            echo -e "${RED}[FAILED]${RESET}"
+            echo "[$(date)] Failed to configure PHP-CGI for $selected_version." >>$ERROR_LOG
+        fi
     fi
 else
     echo -e "${RED}PHP-CGI $selected_version is not installed.${RESET}"
+    echo "[$(date)] PHP-CGI $selected_version not found at $php_cgi_path." >>$ERROR_LOG
 fi
 
 # Switch PHP-CGI-BIN
@@ -163,27 +201,41 @@ print_section "Switching PHP CGI-BIN"
 if [ -f "$php_cgi_bin_path" ]; then
     if sudo update-alternatives --list php-cgi-bin >/dev/null 2>&1; then
         echo -ne "${YELLOW}Switching PHP CGI-BIN to $selected_version...${RESET}"
-        sudo update-alternatives --set php-cgi-bin "$php_cgi_bin_path" >/dev/null &
-        wait $!
-        echo -e "${GREEN}[OK]${RESET}"
+        sudo update-alternatives --set php-cgi-bin "$php_cgi_bin_path" >/dev/null 2>>$ERROR_LOG
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}[OK]${RESET}"
+        else
+            echo -e "${RED}[FAILED]${RESET}"
+            echo "[$(date)] Failed to switch PHP CGI-BIN to $selected_version." >>$ERROR_LOG
+        fi
     else
         echo -ne "${YELLOW}Configuring PHP CGI-BIN for $selected_version...${RESET}"
-        sudo update-alternatives --install /usr/lib/cgi-bin/php php-cgi-bin "$php_cgi_bin_path" $((selected_version * 10)) >/dev/null &
-        wait $!
-        sudo update-alternatives --set php-cgi-bin "$php_cgi_bin_path" >/dev/null &
-        wait $!
-        echo -e "${GREEN}[OK]${RESET}"
+        sudo update-alternatives --install /usr/lib/cgi-bin/php php-cgi-bin "$php_cgi_bin_path" $((selected_version * 10)) >/dev/null 2>>$ERROR_LOG
+        sudo update-alternatives --set php-cgi-bin "$php_cgi_bin_path" >/dev/null 2>>$ERROR_LOG
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}[OK]${RESET}"
+        else
+            echo -e "${RED}[FAILED]${RESET}"
+            echo "[$(date)] Failed to configure PHP CGI-BIN for $selected_version." >>$ERROR_LOG
+        fi
     fi
 else
     echo -e "${RED}PHP CGI-BIN for version $selected_version is not installed.${RESET}"
+    echo "[$(date)] PHP CGI-BIN for $selected_version not found at $php_cgi_bin_path." >>$ERROR_LOG
 fi
 
 # Restart Web Server
 print_section "Restarting Web Server"
 restart_web_server
-echo -e "${GREEN}[OK]${RESET}"
 
 # Confirmation
 print_section "PHP Version Switched"
 php -v
 echo -e "\n${GREEN}PHP has been switched to version $selected_version successfully!${RESET}\n"
+
+# At the end, summarize errors if any
+if [ -s "$ERROR_LOG" ]; then
+    echo -e "\n${RED}Some errors occurred during PHP switching. See ${YELLOW}$ERROR_LOG${RED} for details.${RESET}\n"
+else
+    rm -f "$ERROR_LOG"
+fi
