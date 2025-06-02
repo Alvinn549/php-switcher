@@ -71,6 +71,21 @@ is_repo_installed() {
     grep -i "$repo" /etc/apt/sources.list /etc/apt/sources.list.d/* >/dev/null
 }
 
+# Dependency check function
+check_dependencies() {
+    local missing=()
+    for cmd in lsb_release wget add-apt-repository apt-get; do
+        if ! command -v $cmd >/dev/null 2>&1; then
+            missing+=("$cmd")
+        fi
+    done
+    if [ ${#missing[@]} -ne 0 ]; then
+        echo -e "${RED}Missing dependencies: ${missing[*]}.${RESET}"
+        echo -e "${YELLOW}Please install them before running this script.${RESET}"
+        exit 1
+    fi
+}
+
 # Function to check if a web server is installed
 check_web_server() {
     if command -v apache2 >/dev/null 2>&1; then
@@ -88,18 +103,28 @@ check_web_server() {
         case "$web_choice" in
         1)
             echo -ne "${YELLOW}Installing Apache...${RESET}"
-            sudo apt install -y apache2 >/dev/null 2>&1 &
+            sudo apt install -y apache2 >/dev/null 2>>setup_errors.log &
             spinner
-            echo -e "${GREEN}[OK]${RESET}"
+            if ! command -v apache2 >/dev/null 2>&1; then
+                echo -e "${RED}[FAILED]${RESET}"
+                echo "[$(date)] Apache installation failed." >>setup_errors.log
+            else
+                echo -e "${GREEN}[OK]${RESET}"
+            fi
             ;;
         2)
             echo -ne "${YELLOW}Installing Nginx...${RESET}"
-            sudo apt install -y nginx >/dev/null 2>&1 &
+            sudo apt install -y nginx >/dev/null 2>>setup_errors.log &
             spinner
-            echo -e "${GREEN}[OK]${RESET}"
+            if ! command -v nginx >/dev/null 2>&1; then
+                echo -e "${RED}[FAILED]${RESET}"
+                echo "[$(date)] Nginx installation failed." >>setup_errors.log
+            else
+                echo -e "${GREEN}[OK]${RESET}"
+            fi
             ;;
         *)
-            echo -e "${RED}Invalid choice. Skipping web server installation.${RESET}"
+            echo -e "${YELLOW}Skipping web server installation.${RESET}"
             ;;
         esac
     fi
@@ -117,7 +142,12 @@ setup_php_repo() {
             echo -e "${YELLOW}Installing PHP repository for Debian...${RESET}"
             (sudo apt-get update -y >/dev/null && sudo apt install lsb-release apt-transport-https ca-certificates wget gnupg -y >/dev/null && wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg >/dev/null && echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list >/dev/null && sudo apt-get update -y >/dev/null) &
             spinner
-            echo -e "${GREEN}PHP repository for Debian has been set up successfully.${RESET}"
+            if ! grep -q "packages.sury.org/php" /etc/apt/sources.list.d/php.list 2>/dev/null; then
+                echo -e "${RED}Failed to add PHP repository for Debian.${RESET}"
+                echo "[$(date)] PHP repository setup failed for Debian." >>setup_errors.log
+            else
+                echo -e "${GREEN}PHP repository for Debian has been set up successfully.${RESET}"
+            fi
         fi
 
     elif [[ "$distro" == "ubuntu" ]]; then
@@ -127,7 +157,12 @@ setup_php_repo() {
             echo -e "${YELLOW}Installing PHP repository for Ubuntu...${RESET}"
             (sudo apt-get update -y >/dev/null && sudo apt install software-properties-common gnupg2 -y >/dev/null && sudo add-apt-repository -y ppa:ondrej/php >/dev/null && sudo apt-get update -y >/dev/null) &
             spinner
-            echo -e "${GREEN}PHP repository for Ubuntu has been set up successfully.${RESET}"
+            if ! grep -r "ondrej/php" /etc/apt/sources.list.d/ 2>/dev/null | grep -q "ppa.launchpadcontent.net"; then
+                echo -e "${RED}Failed to add PHP repository for Ubuntu.${RESET}"
+                echo "[$(date)] PHP repository setup failed for Ubuntu." >>setup_errors.log
+            else
+                echo -e "${GREEN}PHP repository for Ubuntu has been set up successfully.${RESET}"
+            fi
         fi
     fi
 }
@@ -162,6 +197,10 @@ process_php_selection() {
         IFS=',' read -ra choices <<<"$user_choice"
         selected_versions=()
         for choice in "${choices[@]}"; do
+            if ! [[ $choice =~ ^[0-9]+$ ]]; then
+                echo -e "${RED}Invalid input: $choice is not a number.${RESET}"
+                continue
+            fi
             index=$((choice - 1))
             if [[ $index -ge 0 && $index -lt ${#AVAILABLE_PHP_VERSIONS[@]} ]]; then
                 selected_versions+=("${AVAILABLE_PHP_VERSIONS[$index]}")
@@ -169,6 +208,10 @@ process_php_selection() {
                 echo -e "${RED}Invalid selection: $choice${RESET}"
             fi
         done
+        if [ ${#selected_versions[@]} -eq 0 ]; then
+            echo -e "${RED}No valid PHP versions selected. Exiting.${RESET}"
+            exit 1
+        fi
     fi
 }
 
@@ -205,6 +248,8 @@ install_php_versions() {
     fi
 }
 
+# Check dependencies before anything else
+check_dependencies
 # Restrict to Debian/Ubuntu
 print_section "Checking Supported OS"
 check_supported_distro
@@ -237,3 +282,10 @@ fi
 
 echo -ne "\n"
 echo -e "${YELLOW}To switch between installed PHP versions, run:${RESET} ${CYAN}sudo ./php-switcher.sh${RESET}\n"
+
+# At the end, summarize errors if any
+if [ -s setup_errors.log ]; then
+    echo -e "\n${RED}Some errors occurred during setup. See ${YELLOW}setup_errors.log${RED} for details.${RESET}\n"
+else
+    rm -f setup_errors.log
+fi
