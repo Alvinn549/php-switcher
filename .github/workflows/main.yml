@@ -81,7 +81,9 @@ jobs:
       - name: Install prerequisites
         run: |
           apt-get update
-          apt-get install -y git lsb-release apt-transport-https ca-certificates wget gnupg software-properties-common sudo
+          apt-get install -y git lsb-release apt-transport-https ca-certificates wget gnupg software-properties-common sudo procps
+          # Ensure /etc/apt/sources.list exists
+          [ -f /etc/apt/sources.list ] || touch /etc/apt/sources.list
       - name: Checkout Code
         uses: actions/checkout@v3
       - name: Run the setup script with simulated input (All PHP versions)
