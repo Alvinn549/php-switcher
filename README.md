@@ -1,8 +1,6 @@
 
 # PHP Version Switcher
 
-This repository provides a set of scripts designed to:
-
 1. Install a web server.
 2. Install multiple PHP versions.
 2. Switch between different installed PHP versions seamlessly.
