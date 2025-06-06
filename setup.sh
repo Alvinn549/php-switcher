@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Ensure the script is run as sudo
 if [ "$EUID" -ne 0 ]; then
     echo "This script must be run as sudo. Please rerun the script using 'sudo ./setup.sh'"
@@ -12,6 +14,14 @@ RED="\e[31m"
 YELLOW="\e[33m"
 CYAN="\e[36m"
 RESET="\e[0m"
+
+ERROR_LOG="setup_errors.log"
+> "$ERROR_LOG"
+
+log_error() {
+    local msg="$1"
+    echo "[$(date)] $msg" >> "$ERROR_LOG"
+}
 
 # Available PHP versions
 AVAILABLE_PHP_VERSIONS=("5.6" "7.0" "7.1" "7.2" "7.3" "7.4" "8.0" "8.1" "8.2" "8.3" "8.4")
@@ -107,7 +117,7 @@ check_web_server() {
             spinner
             if ! command -v apache2 >/dev/null 2>&1; then
                 echo -e "${RED}[FAILED]${RESET}"
-                echo "[$(date)] Apache installation failed." >>setup_errors.log
+                log_error "Apache installation failed."
             else
                 echo -e "${GREEN}[OK]${RESET}"
             fi
@@ -118,7 +128,7 @@ check_web_server() {
             spinner
             if ! command -v nginx >/dev/null 2>&1; then
                 echo -e "${RED}[FAILED]${RESET}"
-                echo "[$(date)] Nginx installation failed." >>setup_errors.log
+                log_error "Nginx installation failed."
             else
                 echo -e "${GREEN}[OK]${RESET}"
             fi
@@ -144,7 +154,7 @@ setup_php_repo() {
             spinner
             if ! grep -q "packages.sury.org/php" /etc/apt/sources.list.d/php.list 2>/dev/null; then
                 echo -e "${RED}Failed to add PHP repository for Debian.${RESET}"
-                echo "[$(date)] PHP repository setup failed for Debian." >>setup_errors.log
+                log_error "PHP repository setup failed for Debian."
             else
                 echo -e "${GREEN}PHP repository for Debian has been set up successfully.${RESET}"
             fi
@@ -159,7 +169,7 @@ setup_php_repo() {
             spinner
             if ! grep -r "ondrej/php" /etc/apt/sources.list.d/ 2>/dev/null | grep -q "ppa.launchpadcontent.net"; then
                 echo -e "${RED}Failed to add PHP repository for Ubuntu.${RESET}"
-                echo "[$(date)] PHP repository setup failed for Ubuntu." >>setup_errors.log
+                log_error "PHP repository setup failed for Ubuntu."
             else
                 echo -e "${GREEN}PHP repository for Ubuntu has been set up successfully.${RESET}"
             fi
@@ -238,7 +248,7 @@ install_php_versions() {
             echo -e "${GREEN}[OK]${RESET}"
         else
             echo -e "${RED}[FAILED]${RESET}"
-            echo "[$(date)] Installation failed for PHP $version. Check $LOG_FILE for details." >>"$LOG_FILE"
+            log_error "Installation failed for PHP $version. Check $LOG_FILE for details."
         fi
     done
 
@@ -284,8 +294,8 @@ echo -ne "\n"
 echo -e "${YELLOW}To switch between installed PHP versions, run:${RESET} ${CYAN}sudo ./php-switcher.sh${RESET}\n"
 
 # At the end, summarize errors if any
-if [ -s setup_errors.log ]; then
-    echo -e "\n${RED}Some errors occurred during setup. See ${YELLOW}setup_errors.log${RED} for details.${RESET}\n"
+if [ -s "$ERROR_LOG" ]; then
+    echo -e "\n${RED}Some errors occurred during setup. See ${YELLOW}$ERROR_LOG${RED} for details.${RESET}\n"
 else
-    rm -f setup_errors.log
+    rm -f "$ERROR_LOG"
 fi
