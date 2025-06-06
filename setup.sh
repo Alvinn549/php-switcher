@@ -78,7 +78,13 @@ check_supported_distro() {
 # Check if repository is already added
 is_repo_installed() {
     local repo=$1
-    grep -i "$repo" /etc/apt/sources.list /etc/apt/sources.list.d/* >/dev/null
+    # Only check files that exist
+    local sources_files=(/etc/apt/sources.list /etc/apt/sources.list.d/*)
+    for file in "${sources_files[@]}"; do
+        [ -f "$file" ] || continue
+        grep -i "$repo" "$file" >/dev/null && return 0
+    done
+    return 1
 }
 
 # Dependency check function
